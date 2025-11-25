@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>ChronoCraft Demo v2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Telegram Mini App SDK (в браузере вне Telegram просто не мешает) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="top-bar">
+      <div class="logo-title">
+        <div class="logo-orb"></div>
+        <h1>ChronoCraft</h1>
+      </div>
+      <div class="currencies">
+        <div class="currency">
+          <span>🪙</span><span id="goldAmount">0</span>
+        </div>
+        <div class="currency premium">
+          <span>💎</span><span id="crystalAmount">0</span>
+        </div>
+        <div class="currency">
+          <span>⚡</span><span id="energyAmount">0</span>/<span id="energyMax">0</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="player-panel">
+      <div class="player-main">
+        <div>
+          <div class="label">Уровень</div>
+          <div class="value" id="playerLevel">1</div>
+        </div>
+        <div>
+          <div class="label">HP</div>
+          <div class="value">
+            <span id="hpCurrent">0</span>/<span id="hpMax">0</span>
+          </div>
+        </div>
+        <div>
+          <div class="label">Атака</div>
+          <div class="value" id="attackPower">0</div>
+        </div>
+        <div>
+          <div class="label">Артефактов</div>
+          <div class="value" id="artifactCount">0</div>
+        </div>
+      </div>
+      <div class="exp-bar">
+        <div class="exp-bar-fill" id="expFill"></div>
+      </div>
+      <div class="exp-label">
+        Опыт: <span id="expCurrent">0</span>/<span id="expToNext">0</span>
+      </div>
+    </section>
+
+    <nav class="tabs">
+      <button class="tab-button active" data-tab="town">🏠 Город</button>
+      <button class="tab-button" data-tab="battle">⚔️ Забег</button>
+      <button class="tab-button" data-tab="upgrades">📈 Прокачка</button>
+      <button class="tab-button" data-tab="shop">🛒 Магазин</button>
+    </nav>
+
+    <main class="tab-content">
+      <section class="tab active" id="tab-town">
+        <h2>Город</h2>
+        <p class="subtitle">
+          База между забегами. Здесь видно общий прогресс и можно забрать оффлайн-награду.
+        </p>
+        <div class="card-grid">
+          <div class="card">
+            <h3>Статистика</h3>
+            <p>Побед: <span id="statWins">0</span></p>
+            <p>Поражений: <span id="statLosses">0</span></p>
+            <p>Лучший уровень сложности: <span id="statBestTier">0</span></p>
+          </div>
+          <div class="card">
+            <h3>Оффлайн-добыча (демо)</h3>
+            <p>
+              В реальной версии герой фармит ресурсы, пока игрок оффлайн.
+              Здесь для демо награда фиксированная.
+            </p>
+            <button id="claimOffline" class="primary">Забрать оффлайн-награду</button>
+            <p class="hint">Награда: +150 🪙, +1 ⚡ (один раз в несколько минут).</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-battle">
+        <h2>Забег в подземелье</h2>
+        <p class="subtitle">
+          Выбери сложность и попытайся пройти серию комнат. После каждой комнаты можно
+          отступить или идти дальше за лучшей наградой.
+        </p>
+        <div class="card battle-settings">
+          <label>Сложность:</label>
+          <div class="difficulty-list">
+            <button class="difficulty-button active" data-tier="1">I — Лёгкая</button>
+            <button class="difficulty-button" data-tier="2">II — Нормальная</button>
+            <button class="difficulty-button" data-tier="3">III — Сложная</button>
+          </div>
+          <p class="hint">
+            Чем выше сложность, тем больше золота и опыта, но враги сильнее.
+          </p>
+          <button id="startRunBtn" class="primary">Начать забег (1 ⚡)</button>
+        </div>
+        <div class="card battle-log">
+          <h3>Текущий забег</h3>
+          <p class="hint" id="runStatus">Забег не начат.</p>
+          <div id="battleLogContent"></div>
+          <div class="battle-actions">
+            <button id="manualAttackBtn" disabled>Обычный удар</button>
+            <button id="manualSkillBtn" disabled>Мощный удар (-2 HP)</button>
+            <button id="manualFleeBtn" disabled>Сбежать</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-upgrades">
+        <h2>Прокачка</h2>
+        <p class="subtitle">
+          Вкладывай золото в характеристики и находи артефакты, чтобы строить разные билды.
+        </p>
+        <div class="card-grid">
+          <div class="card">
+            <h3>Характеристики</h3>
+            <div class="upgrade-row">
+              <div>
+                <strong>+10 HP</strong>
+                <div class="hint">Больше выживаемость в забегах.</div>
+              </div>
+              <button class="secondary upgrade-btn" data-upgrade="hp" data-cost="60">
+                Купить за 60 🪙
+              </button>
+            </div>
+            <div class="upgrade-row">
+              <div>
+                <strong>+2 атаки</strong>
+                <div class="hint">Ускоряет убийство врагов.</div>
+              </div>
+              <button class="secondary upgrade-btn" data-upgrade="atk" data-cost="90">
+                Купить за 90 🪙
+              </button>
+            </div>
+            <div class="upgrade-row">
+              <div>
+                <strong>+1 макс. энергия</strong>
+                <div class="hint">Больше забегов подряд.</div>
+              </div>
+              <button class="secondary upgrade-btn" data-upgrade="energy" data-cost="120">
+                Купить за 120 🪙
+              </button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Артефакты (демо)</h3>
+            <p class="hint">
+              В полной версии артефакты падают из боссов и сундуков с разной редкостью и эффектами.
+            </p>
+            <ul id="artifactList" class="artifact-list"></ul>
+            <button id="getDemoArtifact" class="secondary">
+              Выбить демо-артефакт
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-shop">
+        <h2>Магазин</h2>
+        <p class="subtitle">
+          Демонстрация логики монетизации: премиум-валюта, обмен на бусты и наборы.
+        </p>
+        <div class="card-grid">
+          <div class="card">
+            <h3>Наборы кристаллов (демо)</h3>
+            <div class="shop-item">
+              <div>
+                <strong>Малый набор</strong>
+                <div class="hint">+20 💎 — имитация покупки через Telegram Payments.</div>
+              </div>
+              <button class="primary buy-crystals" data-amount="20">
+                Купить (демо)
+              </button>
+            </div>
+            <div class="shop-item">
+              <div>
+                <strong>Средний набор</strong>
+                <div class="hint">+60 💎 — ощущение выгодной покупки.</div>
+              </div>
+              <button class="primary buy-crystals" data-amount="60">
+                Купить (демо)
+              </button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Обмен кристаллов</h3>
+            <div class="shop-item">
+              <div>
+                <strong>+1000 🪙</strong>
+                <div class="hint">Стоимость: 10 💎</div>
+              </div>
+              <button class="secondary buy-gold" data-cost="10" data-gain="1000">
+                Обменять
+              </button>
+            </div>
+            <div class="shop-item">
+              <div>
+                <strong>+5 ⚡ энергии</strong>
+                <div class="hint">Стоимость: 15 💎</div>
+              </div>
+              <button class="secondary buy-energy" data-cost="15" data-gain="5">
+                Купить
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="hint">
+          В реальном проекте здесь вызывается Telegram Payments API и серверная проверка.
+          В этой демо всё начисляется локально, для демонстрации UX.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
